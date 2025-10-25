@@ -101,9 +101,17 @@ int buildEncodingTree(int nextFree) {
     //    - Create a new parent node with combined weight
     //    - Set left/right pointers
     //    - Push new parent index back into the heap
+    while (heap.size > 1) {
+      int i1 = heap.pop(weightArr);
+      int i2 = heap.pop(weightArr);
+      weightArr[nextFree] = weightArr[i1] + weightArr[i2];
+      leftArr[nextFree] = i1;
+      rightArr[nextFree] = i2;
+      heap.push(nextFree, weightArr);
+      nextFree++;
+    }
     // 4. Return the index of the last remaining node (root)
-
-    return -1; // placeholder
+    return heap.pop(weightArr); // placeholder
 }
 
 // Step 4: Use an STL stack to generate codes
