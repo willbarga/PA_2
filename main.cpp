@@ -118,7 +118,28 @@ int buildEncodingTree(int nextFree) {
 void generateCodes(int root, string codes[]) {
     // TODO:
     // Use stack<pair<int, string>> to simulate DFS traversal.
+    stack<pair<int, string>> s;
+    s.push({root, ""});
     // Left edge adds '0', right edge adds '1'.
+    while (s.empty()) {
+        auto [nodeIndex, code] = s.top();
+        s.pop();
+
+        if (leftArr[nodeIndex] == -1 && rightArr[nodeIndex] == -1) {
+            char c = charArr[nodeIndex];
+            if (c >= 'a' && c <= 'z') {
+                codes[c - 'a'] = code;
+            }
+        }
+        else {
+            if (rightArr[nodeIndex] != -1) {
+                s.push({rightArr[nodeIndex], code + "1"});
+            }
+            if (leftArr[nodeIndex] != -1) {
+                s.push({leftArr[nodeIndex], code + "0"});
+            }
+        }
+    }
     // Record code when a leaf node is reached.
 }
 
