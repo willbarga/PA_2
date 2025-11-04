@@ -1,6 +1,3 @@
-//
-// Created by Manju Muralidharan on 10/19/25.
-//
 #include <iostream>
 #include <fstream>
 #include <stack>
@@ -8,14 +5,16 @@
 #include "heap.h"
 using namespace std;
 
-// Global arrays for node information
+// Maximum number of nodes allowed in the Huffman tree
 const int MAX_NODES = 64;
-int weightArr[MAX_NODES];
-int leftArr[MAX_NODES];
-int rightArr[MAX_NODES];
-char charArr[MAX_NODES];
 
-// Function prototypes
+// Arrays to store Huffman tree node data
+int weightArr[MAX_NODES];   // Frequency or combined weight of each node
+int leftArr[MAX_NODES];     // Index of left child (-1 if none)
+int rightArr[MAX_NODES];    // Index of right child (-1 if none)
+char charArr[MAX_NODES];    // Character stored in leaf nodes
+
+// Function declarations
 void buildFrequencyTable(int freq[], const string& filename);
 int createLeafNodes(int freq[]);
 int buildEncodingTree(int nextFree);
@@ -23,32 +22,28 @@ void generateCodes(int root, string codes[]);
 void encodeMessage(const string& filename, string codes[]);
 
 int main() {
-    int freq[26] = {0};
+    int freq[26] = {0};  // Frequency table for lowercase letters a–z
 
-    // Step 1: Read file and count letter frequencies
+    // Step 1: Count character frequencies from input file
     buildFrequencyTable(freq, "input.txt");
 
-    // Step 2: Create leaf nodes for each character with nonzero frequency
+    // Step 2: Create leaf nodes for characters with non-zero frequency
     int nextFree = createLeafNodes(freq);
 
-    // Step 3: Build encoding tree using your heap
+    // Step 3: Build Huffman encoding tree using a min heap
     int root = buildEncodingTree(nextFree);
 
-    // Step 4: Generate binary codes using an STL stack
-    string codes[26];
+    // Step 4: Traverse tree to generate binary codes for each character
+    string codes[26];  // Stores Huffman codes for a–z
     generateCodes(root, codes);
 
-    // Step 5: Encode the message and print output
+    // Step 5: Encode the input message and display results
     encodeMessage("input.txt", codes);
 
     return 0;
 }
 
-/*------------------------------------------------------
-    Function Definitions (Students will complete logic)
-  ------------------------------------------------------*/
-
-// Step 1: Read file and count frequencies
+// Step 1: Read file and count frequencies of lowercase letters
 void buildFrequencyTable(int freq[], const string& filename) {
     ifstream file(filename);
     if (!file.is_open()) {
@@ -71,14 +66,14 @@ void buildFrequencyTable(int freq[], const string& filename) {
     cout << "Frequency table built successfully.\n";
 }
 
-// Step 2: Create leaf nodes for each character
+// Step 2: Create leaf nodes for each character with non-zero frequency
 int createLeafNodes(int freq[]) {
     int nextFree = 0;
     for (int i = 0; i < 26; ++i) {
         if (freq[i] > 0) {
-            charArr[nextFree] = 'a' + i;
-            weightArr[nextFree] = freq[i];
-            leftArr[nextFree] = -1;
+            charArr[nextFree] = 'a' + i;       // Store character
+            weightArr[nextFree] = freq[i];     // Store frequency
+            leftArr[nextFree] = -1;            // No children yet
             rightArr[nextFree] = -1;
             nextFree++;
         }
@@ -87,77 +82,81 @@ int createLeafNodes(int freq[]) {
     return nextFree;
 }
 
-// Step 3: Build the encoding tree using heap operations
+// Step 3: Build Huffman encoding tree using heap operations
 int buildEncodingTree(int nextFree) {
-    // TODO:
-    // 1. Create a MinHeap object.
     MinHeap heap;
-    // 2. Push all leaf node indices into the heap.
+
+    // Push all leaf node indices into the heap
     for (int i = 0; i < nextFree; ++i) {
         heap.push(i, weightArr);
     }
-    // 3. While the heap size is greater than 1:
-    //    - Pop two smallest nodes
-    //    - Create a new parent node with combined weight
-    //    - Set left/right pointers
-    //    - Push new parent index back into the heap
+
+    // Combine nodes until only one remains (the root)
     while (heap.size > 1) {
-      int i1 = heap.pop(weightArr);
-      int i2 = heap.pop(weightArr);
-      weightArr[nextFree] = weightArr[i1] + weightArr[i2];
-      leftArr[nextFree] = i1;
-      rightArr[nextFree] = i2;
-      heap.push(nextFree, weightArr);
-      nextFree++;
+        int i1 = heap.pop(weightArr);  // Smallest node
+        int i2 = heap.pop(weightArr);  // Second smallest
+
+        // Create new parent node
+        weightArr[nextFree] = weightArr[i1] + weightArr[i2];
+        leftArr[nextFree] = i1;
+        rightArr[nextFree] = i2;
+
+        heap.push(nextFree, weightArr);  // Push new node into heap
+        nextFree++;
     }
-    // 4. Return the index of the last remaining node (root)
-    return heap.pop(weightArr); // placeholder
+
+    // Return index of root node
+    return heap.pop(weightArr);
 }
 
-// Step 4: Use an STL stack to generate codes
+// Step 4: Traverse tree using DFS to generate Huffman codes
 void generateCodes(int root, string codes[]) {
-    // TODO:
-    // Use stack<pair<int, string>> to simulate DFS traversal.
     stack<pair<int, string>> s;
-    s.push({root, ""});
-    // Left edge adds '0', right edge adds '1'.
+    s.push({root, ""});  // Start from root with empty code
+
     while (!s.empty()) {
         auto [nodeIndex, code] = s.top();
         s.pop();
 
+        // If leaf node, store code for character
         if (leftArr[nodeIndex] == -1 && rightArr[nodeIndex] == -1) {
             char c = charArr[nodeIndex];
             if (c >= 'a' && c <= 'z') {
                 codes[c - 'a'] = code;
             }
-        }
-        else {
+        } else {
+            // Traverse right child (adds '1')
             if (rightArr[nodeIndex] != -1) {
                 s.push({rightArr[nodeIndex], code + "1"});
             }
+            // Traverse left child (adds '0')
             if (leftArr[nodeIndex] != -1) {
                 s.push({leftArr[nodeIndex], code + "0"});
             }
         }
     }
-    // Record code when a leaf node is reached.
 }
 
-// Step 5: Print table and encoded message
+// Step 5: Print Huffman codes and encode the input message
 void encodeMessage(const string& filename, string codes[]) {
+    // Print character-to-code mapping
     cout << "\nCharacter : Code\n";
     for (int i = 0; i < 26; ++i) {
         if (!codes[i].empty())
             cout << char('a' + i) << " : " << codes[i] << "\n";
     }
 
+    // Print encoded message
     cout << "\nEncoded message:\n";
 
     ifstream file(filename);
     char ch;
     while (file.get(ch)) {
+        // Normalize to lowercase
         if (ch >= 'A' && ch <= 'Z')
             ch = ch - 'A' + 'a';
+
+        // Output Huffman code for each character
         if (ch >= 'a' && ch <= 'z')
             cout << codes[ch - 'a'];
     }
