@@ -121,7 +121,7 @@ void generateCodes(int root, string codes[]) {
     stack<pair<int, string>> s;
     s.push({root, ""});
     // Left edge adds '0', right edge adds '1'.
-    while (s.empty()) {
+    while (!s.empty()) {
         auto [nodeIndex, code] = s.top();
         s.pop();
 
